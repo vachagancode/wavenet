@@ -1,5 +1,5 @@
 root.wav
 main.ipynb
 main.code-workspace
-.vscode
-__pycache__
+.vscode/
+__pycache__/
