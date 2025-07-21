@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 from tqdm import tqdm
@@ -50,9 +51,11 @@ def train(config, device, pretrained=None):
 
 
             # Calculate the loss
-            print(logits.permute(0, 2, 1).shape, tgt.shape)
+            # print(logits.permute(0, 2, 1).shape, tgt.shape)
             loss = loss_fn(logits.permute(0, 2, 1), tgt.squeeze(1))
-            print(loss.item())
+
+
+            batch_loader.set_postfix({"Loss": loss.item()})
 
             # Optimizer zero grad
             optimizer.zero_grad()
@@ -66,10 +69,10 @@ def train(config, device, pretrained=None):
 
             epoch_loss += loss.item()
             epoch_step += 1
-            break
 
         epoch_loss /= epoch_step
 
+        print("Epoch: {epoch} | Loss: {epoch_loss}")
         # Save the model
         if epoch_loss < previous_loss:
             torch.save(
@@ -79,9 +82,9 @@ def train(config, device, pretrained=None):
                     "scheduler_state_dict": scheduler.state_dict(),
                     "train_loss": epoch_loss,
                     "epoch": epoch
-                }
+                },
+                f=f"./models/me{epoch}l{math.floor(epoch_loss)}.pth"
             )
-        break
     return model
 
 if __name__ == "__main__":

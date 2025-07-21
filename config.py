@@ -8,5 +8,5 @@ def get_config():
         "pconv_hidden": 256,
         "pconv_output": 512,
         "kernel_size": 3,
-        "epochs": 10
+        "epochs": 50
     }

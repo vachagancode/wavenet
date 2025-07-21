@@ -46,21 +46,21 @@ def create_dataloaders():
 
     train_dataloader = DataLoader(
         dataset=train_set,
-        batch_size=2,
+        batch_size=8,
         shuffle=True,
         pin_memory=True
     )
 
     valid_dataloader = DataLoader(
         dataset=valid_set,
-        batch_size=2,
+        batch_size=8,
         shuffle=True,
         pin_memory=True
     )
 
     test_dataloader = DataLoader(
         dataset=test_set,
-        batch_size=2,
+        batch_size=8,
         shuffle=False,
         pin_memory=True
     )
