@@ -55,7 +55,8 @@ def create_dataloaders(quantization_channels):
         dataset=valid_set,
         batch_size=4,
         shuffle=True,
-        pin_memory=True
+        pin_memory=True,
+
     )
 
     test_dataloader = DataLoader(

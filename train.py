@@ -56,8 +56,8 @@ def train(config, device):
                 loss = loss_fn(logits.permute(0, 2, 1), tgt.squeeze(1))
                 accuracy = calculate_accuracy(logits, tgt.squeeze(1))
 
-                writer.add_scalar("Train/Loss", loss.item(), len(batch))
-                writer.add_scalar("Train/Accuracy", accuracy, len(batch))
+                writer.add_scalar("Train/Loss", loss.item(), global_step=epoch)
+                writer.add_scalar("Train/Accuracy", accuracy, global_step=epoch)
 
                 batch_loader.set_postfix({"Loss": loss.item(), "Accuracy": accuracy})
 
@@ -97,15 +97,15 @@ def train(config, device):
                         valid_logits = model(src)
 
                         # Calculate the loss and accuracy]
-                        valid_loss = loss_fn(logits.permute(0, 2, 1), tgt.squeeze(1))
+                        valid_loss = loss_fn(valid_logits.permute(0, 2, 1), tgt.squeeze(1))
                         valid_accuracy = calculate_accuracy(valid_logits, tgt.squeeze(1))
 
                         epoch_valid_step += 1
                         epoch_valid_loss += valid_loss.item()
                         epoch_valid_accuracy += valid_accuracy
 
-                        writer.add_scalar("Validation/Loss", valid_loss.item(), len(batch))
-                        writer.add_scalar("Validaion/Accuracy", valid_accuracy, len(batch))
+                        writer.add_scalar("Validation/Loss", valid_loss.item(), global_step=epoch)
+                        writer.add_scalar("Validaion/Accuracy", valid_accuracy, global_step=epoch)
 
                     epoch_valid_loss /= epoch_valid_step
                     epoch_valid_accuracy /= epoch_valid_step
