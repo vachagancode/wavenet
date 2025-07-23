@@ -67,3 +67,8 @@ def create_dataloaders(quantization_channels):
     )
 
     return train_dataloader, valid_dataloader, test_dataloader
+
+
+if __name__ == "__main__":
+    a, _, _ = create_dataloaders(256)
+    print(next(iter(a)))
