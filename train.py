@@ -59,6 +59,7 @@ def train(config, device):
                 writer.add_scalar("Train/Loss", loss.item(), global_step=epoch)
                 writer.add_scalar("Train/Accuracy", accuracy, global_step=epoch)
 
+
                 batch_loader.set_postfix({"Loss": loss.item(), "Accuracy": accuracy})
 
                 # Optimizer zero grad
