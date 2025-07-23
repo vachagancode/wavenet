@@ -21,8 +21,7 @@ class WavenetDataset(Dataset):
         # print(song.shape)
         input_song = song[:, :-1]
         target_song = song[:, 1:]
-        if target_song.shape[-1] != length:
-            target_song = F.pad(target_song, pad=(0, length - target_song.shape[-1]))
+
         # Apply Mu Law Transform on the target
         target_song = self.mu_law_transform(target_song)
 
