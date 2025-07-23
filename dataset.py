@@ -7,11 +7,11 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import torchaudio
 
 class WavenetDataset(Dataset):
-    def __init__(self, datapath):
+    def __init__(self, datapath, quantization_channels):
         super().__init__()
         self.datapath = datapath
         self.files = os.listdir(self.datapath)
-        self.mu_law_transform = torchaudio.transforms.MuLawEncoding(quantization_channels=512) # leaving the quantization channels to default (256)
+        self.mu_law_transform = torchaudio.transforms.MuLawEncoding(quantization_channels=quantization_channels) # leaving the quantization channels to default (256)
 
     def __getitem__(self, idx):
         audio = self.files[idx]
@@ -31,36 +31,36 @@ class WavenetDataset(Dataset):
     def __len__(self):
         return len(self.files)
 
-def create_datasets():
+def create_datasets(quantization_channels):
     """
         Returns Train/Validation/Test datasets
     """
-    dataset = WavenetDataset(datapath="data/")
+    dataset = WavenetDataset(datapath="data/", quantization_channels=quantization_channels)
     train_set, valid_set, test_set = random_split(dataset, [0.8, 0.1, 0.1])
 
     return train_set, valid_set, test_set
 
 
-def create_dataloaders():
-    train_set, valid_set, test_set = create_datasets()
+def create_dataloaders(quantization_channels):
+    train_set, valid_set, test_set = create_datasets(quantization_channels)
 
     train_dataloader = DataLoader(
         dataset=train_set,
-        batch_size=8,
+        batch_size=4,
         shuffle=True,
         pin_memory=True
     )
 
     valid_dataloader = DataLoader(
         dataset=valid_set,
-        batch_size=8,
+        batch_size=4,
         shuffle=True,
         pin_memory=True
     )
 
     test_dataloader = DataLoader(
         dataset=test_set,
-        batch_size=8,
+        batch_size=4,
         shuffle=False,
         pin_memory=True
     )

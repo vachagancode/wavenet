@@ -1,93 +1,139 @@
+import os
 import math
 import torch
 import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+import time
 
 from wavenet import create_wavenet
 from dataset import create_dataloaders
-from utils import create_optimizer_and_scheduler
+from utils import create_optimizer_and_scheduler, calculate_accuracy, create_summary_writer
 from config import get_config
 
-def train(config, device, pretrained=None):
+def train(config, device):
+    print("[INFO] Experiment started.")
+    start_time = time.time()
     # Create the model
-    model = create_wavenet(config, device)
+    for model_config in config:
+        print("-----------------------------------------------------------------------")
+        print(f"[INFO] Model name: {model_config['model_name']}.")
 
-    train_dataloader, valid_dataloader, test_dataloader = create_dataloaders()
+        # Create the writer
+        writer = create_summary_writer(model_config["model_name"])
 
-    if pretrained is not None:
-        data = torch.load(pretrained, weights_only=True, map_location=device)
-        model.load_state_dict(data["model_state_dict"])
+        model = create_wavenet(model_config, device)
 
-        optimizer.load_state_dict(data["optimizer_state_dict"])
-        scheduler.load_state_dict(data["scheduler_state_dict"])
-        previous_loss = data["train_loss"]
-        start_epoch = data["epoch"]
-        end_epoch = start_epoch + config["epochs"]
+        train_dataloader, _, _ = create_dataloaders(model_config["pconv_output"])
 
-        optimizer, scheduler = create_optimizer_and_scheduler(model, train_dataloader, start_epoch, end_epoch, data["optimizer_state_dict"], data["scheduler_state_dict"])
-
-    else:
         start_epoch = 0
-        end_epoch = start_epoch + config["epochs"]
+        end_epoch = start_epoch + model_config["epochs"]
         previous_loss = float("inf")
 
         optimizer, scheduler = create_optimizer_and_scheduler(model, train_dataloader, start_epoch, end_epoch)
 
-    loss_fn = nn.CrossEntropyLoss()
+        loss_fn = nn.CrossEntropyLoss()
+        new_model_dir = model_config["model_name"]
+        # create the directory for models to save
+        os.mkdir(new_model_dir)
+        for epoch in range(start_epoch, end_epoch):
 
-    for epoch in range(start_epoch, end_epoch):
+            batch_loader = tqdm(train_dataloader)
+            epoch_loss = 0
+            epoch_accuracy = 0
+            epoch_step = 0
+            for batch in batch_loader:
+                model.train()
 
-        batch_loader = tqdm(train_dataloader)
-        epoch_loss = 0
-        epoch_step = 0
-        for batch in batch_loader:
-            model.train()
+                src, tgt = batch
+                src, tgt = src.float().to(device), tgt.long().to(device)
 
-            src, tgt = batch
-            src, tgt = src.float().to(device), tgt.long().to(device)
+                # Do the forward pass
+                logits = model(src)
 
-            # Do the forward pass
-            logits = model(src)
+                # Calculate the loss
+                # print(logits.permute(0, 2, 1).shape, tgt.shape)
+                loss = loss_fn(logits.permute(0, 2, 1), tgt.squeeze(1))
+                accuracy = calculate_accuracy(logits, tgt.squeeze(1))
+
+                writer.add_scalar("Train/Loss", loss.item(), len(batch))
+                writer.add_scalar("Train/Accuracy", accuracy, len(batch))
+
+                batch_loader.set_postfix({"Loss": loss.item(), "Accuracy": accuracy})
+
+                # Optimizer zero grad
+                optimizer.zero_grad()
+
+                # Loss Backwards
+                loss.backward()
+
+                # Optimizer + LR_Scheduler step
+                optimizer.step()
+                scheduler.step()
+
+                epoch_accuracy += accuracy
+                epoch_loss += loss.item()
+                epoch_step += 1
 
 
-            # Calculate the loss
-            # print(logits.permute(0, 2, 1).shape, tgt.shape)
-            loss = loss_fn(logits.permute(0, 2, 1), tgt.squeeze(1))
+            epoch_loss /= epoch_step
+            epoch_accuracy /= epoch_step
 
+            print(f"[INFO] Training Epoch: {epoch} | Loss: {epoch_loss:.4f} | Accuracy: {epoch_accuracy:.4f}%.")
 
-            batch_loader.set_postfix({"Loss": loss.item()})
+            if epoch % 5 == 0:
+                # Do the validation
+                model.eval()
+                with torch.inference_mode():
+                    valid_batch_loader = tqdm(train_dataloader)
+                    epoch_valid_loss = 0
+                    epoch_valid_accuracy = 0
+                    epoch_valid_step = 0
+                    for batch in valid_batch_loader:
+                        src, tgt = batch
+                        src, tgt = src.float().to(device), tgt.long().to(device)
 
-            # Optimizer zero grad
-            optimizer.zero_grad()
+                        # Do the forward pass
+                        valid_logits = model(src)
 
-            # Loss Backwards
-            loss.backward()
+                        # Calculate the loss and accuracy]
+                        valid_loss = loss_fn(logits.permute(0, 2, 1), tgt.squeeze(1))
+                        valid_accuracy = calculate_accuracy(valid_logits, tgt.squeeze(1))
 
-            # Optimizer + LR_Scheduler step
-            optimizer.step()
-            scheduler.step()
+                        epoch_valid_step += 1
+                        epoch_valid_loss += valid_loss.item()
+                        epoch_valid_accuracy += valid_accuracy
 
-            epoch_loss += loss.item()
-            epoch_step += 1
+                        writer.add_scalar("Validation/Loss", valid_loss.item(), len(batch))
+                        writer.add_scalar("Validaion/Accuracy", valid_accuracy, len(batch))
 
-        epoch_loss /= epoch_step
+                    epoch_valid_loss /= epoch_valid_step
+                    epoch_valid_accuracy /= epoch_valid_step
 
-        print("Epoch: {epoch} | Loss: {epoch_loss}")
-        # Save the model
-        if epoch_loss < previous_loss:
-            torch.save(
-                obj={
-                    "model_state_dict": model.state_dict(),
-                    "optimizer_state_dict": optimizer.state_dict(),
-                    "scheduler_state_dict": scheduler.state_dict(),
-                    "train_loss": epoch_loss,
-                    "epoch": epoch
-                },
-                f=f"./models/me{epoch}l{math.floor(epoch_loss)}.pth"
-            )
-    return model
+                print(f"[INFO] Validation Epoch: {epoch} | Loss: {epoch_valid_loss} | Accuracy: {epoch_valid_accuracy}%.")
 
-if __name__ == "__main__":
-    config = get_config()
+            # Save the model
+            if epoch_loss < previous_loss:
+                torch.save(
+                    obj={
+                        "model_state_dict": model.state_dict(),
+                        "optimizer_state_dict": optimizer.state_dict(),
+                        "scheduler_state_dict": scheduler.state_dict(),
+                        "train_loss": epoch_loss,
+                        "epoch": epoch
+                    },
+                    f=f"./{new_model_dir}/me{epoch}l{math.floor(epoch_loss*100)}.pth"
+                )
 
-    train(config, device=torch.device('cpu'))
+        # Save the final models
+        torch.save(
+            obj={
+                "model_state_dict": model.state_dict(),
+            },
+            f=f"./models/{model_config['model_name']}_final.pth"
+        )
+
+    # Get the end time
+    end_time = time.time()
+
+    print(f"[INFO] Experiment was successfully finished in {(end_time  - start_time):.3f} seconds.")

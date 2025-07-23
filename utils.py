@@ -1,10 +1,11 @@
 import torch
 import torchaudio
+import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
 
 from pydub import AudioSegment
 
 from wavenet import create_wavenet
-from config import get_config
 
 def trim_audio(path : str, chunk_size : int = 5000):
     audio = AudioSegment.from_file(path)
@@ -64,3 +65,22 @@ def create_optimizer_and_scheduler(model, dataloader, start_epoch, end_epoch, op
         scheduler.load_state_dict(scheduler_state_dict)
 
     return optimizer, scheduler
+
+def calculate_accuracy(logits, targets):
+    correct = 0
+    total = 0
+
+    # apply softmax to the logits
+    preds = F.softmax(logits, dim=-1).argmax(dim=-1)
+    total += preds.shape[-1]
+    correct += (preds == targets).sum()
+
+    accuracy = (correct.item() / total) * 100
+
+    return accuracy
+
+def create_summary_writer(model_name):
+    writer_dir = f"./runs/{model_name}"
+    writer = SummaryWriter(log_dir=writer_dir)
+    print(f"[INFO] SummaryWriter created in {writer_dir}.")
+    return writer
