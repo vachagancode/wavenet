@@ -27,6 +27,7 @@ def create_wavenet(config, device=torch.device("cpu")):
     return WaveNet(
         dconv_input=config["dconv_input"],
         dconv_output=config["dconv_output"],
+        dconv_hidden=config["dconv_output"],
         pconv_input=config["pconv_input"],
         pconv_hidden=config["pconv_hidden"],
         pconv_output=config["pconv_output"],
