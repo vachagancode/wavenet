@@ -9,10 +9,10 @@ from tqdm import tqdm
 from config import get_config
 
 class WaveNet(nn.Module):
-    def __init__(self, dconv_input : int, dconv_output : int, pconv_input : int, pconv_hidden : int, pconv_output : int, kernel_size : int, *args, **kwargs):
+    def __init__(self, dconv_input : int, dconv_output : int, dconv_hidden : int, pconv_input : int, pconv_hidden : int, pconv_output : int, kernel_size : int, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # self.embedding_layer = EmbeddingLayer(vocab_size=vocab_size, dim=embd_dim)
-        self.dilated_conv_layer = DilatedConvolutionalLayerStack(in_channels=dconv_input, out_channels=dconv_output, kernel_size=kernel_size)
+        self.dilated_conv_layer = DilatedConvolutionalLayerStack(in_channels=dconv_input, hidden_channels=dconv_hidden, out_channels=dconv_output, kernel_size=kernel_size)
         self.post_dilated_conv_layer = PostDilationLayer(in_channels=pconv_input, hidden_channels=pconv_hidden, out_channels=pconv_output)
 
     def forward(self, x):

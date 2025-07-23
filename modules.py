@@ -15,19 +15,20 @@ import torch.nn.functional as F
 #         return self.embedding(x)
 
 class DilatedCausalConvolutionalLayer(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, dilation_rate, *args, **kwargs):
+    def __init__(self, in_channels, hidden_channels, out_channels, kernel_size, dilation_rate, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.in_channels = in_channels
+        self.hidden_channels = hidden_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
         self.causal_padding = (kernel_size - 1) * dilation_rate
         self.dilation_rate = dilation_rate
 
-        self.conv_layer_1 = nn.Conv1d(in_channels=self.in_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, padding=0, dilation=self.dilation_rate)
+        self.conv_layer_1 = nn.Conv1d(in_channels=self.in_channels, out_channels=self.hidden_channels, kernel_size=self.kernel_size, padding=0, dilation=self.dilation_rate)
         self.tanh = nn.Tanh()
         self.sigmoid = nn.Sigmoid()
-        self.conv_1x1 = nn.Conv1d(in_channels=self.out_channels, out_channels=self.in_channels, kernel_size=1)
-        self.skip_conv_1x1 = nn.Conv1d(in_channels=self.out_channels, out_channels=self.in_channels, kernel_size=1)
+        self.conv_1x1 = nn.Conv1d(in_channels=self.hidden_channels, out_channels=self.out_channels, kernel_size=1)
+        self.skip_conv_1x1 = nn.Conv1d(in_channels=self.hidden_channels, out_channels=self.out_channels, kernel_size=1)
         self.residual_connections = lambda x, y: x + y
 
     def forward(self, x):
@@ -50,12 +51,15 @@ class DilatedCausalConvolutionalLayer(nn.Module):
         return x, skip_1x1
 
 class DilatedConvolutionalLayerStack(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, *args, **kwargs):
+    def __init__(self, in_channels, hidden_channels, out_channels, kernel_size, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dilations = [2**i for i in range(10)]
         self.stack = nn.ModuleList()
-        for dilation in self.dilations:
-            layer = DilatedCausalConvolutionalLayer(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, dilation_rate=dilation)
+        for ix, dilation in enumerate(self.dilations):
+            if ix == 0:
+                layer = DilatedCausalConvolutionalLayer(in_channels=1, out_channels=out_channels, hidden_channels=hidden_channels kernel_size=kernel_size, dilation_rate=dilation)
+            else:
+                layer = DilatedCausalConvolutionalLayer(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, dilation_rate=dilation)
             self.stack.append(layer)
 
     def forward(self, x):

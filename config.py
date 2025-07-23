@@ -2,7 +2,7 @@ def get_config():
     hyperparameters = [
         {
             "model_name": "model_256_256_5",
-            "dconv_input": 1,
+            "dconv_input": 64,
             "dconv_output": 64,
             "pconv_input": 64,
             "pconv_hidden": 256,
