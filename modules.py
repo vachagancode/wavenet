@@ -59,7 +59,7 @@ class DilatedConvolutionalLayerStack(nn.Module):
             if ix == 0:
                 layer = DilatedCausalConvolutionalLayer(in_channels=1, out_channels=out_channels, hidden_channels=hidden_channels, kernel_size=kernel_size, dilation_rate=dilation)
             else:
-                layer = DilatedCausalConvolutionalLayer(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, dilation_rate=dilation)
+                layer = DilatedCausalConvolutionalLayer(in_channels=in_channels, out_channels=out_channels, hidden_channels=hidden_channels, kernel_size=kernel_size, dilation_rate=dilation)
             self.stack.append(layer)
 
     def forward(self, x):
