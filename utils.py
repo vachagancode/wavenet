@@ -1,11 +1,13 @@
 import torch
 import torchaudio
 import torch.nn.functional as F
-from torch.utils.tensorboard import SummaryWriter
 
 from pydub import AudioSegment
+from tqdm import tqdm
 
 from wavenet import create_wavenet
+from config import get_config
+
 
 def trim_audio(path : str, chunk_size : int = 5000):
     audio = AudioSegment.from_file(path)
@@ -84,3 +86,46 @@ def create_summary_writer(model_name):
     writer = SummaryWriter(log_dir=writer_dir)
     print(f"[INFO] SummaryWriter created in {writer_dir}.")
     return writer
+
+def generate_audio(input_path, model, mu_decoder, steps=500):
+    predicted = []
+    audio, sr = torchaudio.load(input_path)
+    print(f"Sample Rate: {sr}")
+
+    if audio.shape[0] != 1:
+        audio = audio.mean(0, keepdim=True)
+    audio = audio.unsqueeze(0)
+    initial_audio = audio.clone()
+    with torch.inference_mode():
+        for step in tqdm(range(steps)):
+            # print(step)
+
+            logits = model(audio)
+            # Apply softmax
+            preds = F.softmax(logits, dim=-1)
+
+            decoded = greedy_decode(preds)
+
+            mu_law_decoded = mu_decoder(decoded)
+
+            prediction = mu_law_decoded[:, :, -1].unsqueeze(0)
+            # print(prediction)
+            predicted.append(prediction)
+
+            audio = torch.cat([(audio[:, :, 1:]), prediction], dim=-1)
+        predictions = torch.stack(predicted, dim=-1).squeeze(0)
+
+        # Concatenate with the audio
+        final = torch.cat([initial_audio, predictions], dim=-1).squeeze(0)
+
+        torchaudio.save("./output.wav", final, sr, bits_per_sample=16)
+
+if __name__ == "__main__":
+    config = get_config()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = create_wavenet(config[0], device=device)
+    model_state_dict = torch.load("./m256k5v1_final.pth", map_location=device)["model_state_dict"]
+    model.load_state_dict(model_state_dict)
+
+    mu_decoder = torchaudio.transforms.MuLawDecoding(quantization_channels=256)
+    generate_audio("./test.wav", model, mu_decoder)
