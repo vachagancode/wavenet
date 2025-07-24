@@ -95,7 +95,7 @@ def generate_audio(input_path, model, mu_decoder, steps=500):
     if audio.shape[0] != 1:
         audio = audio.mean(0, keepdim=True)
     audio = audio.unsqueeze(0)
-    initial_audio = audio.clone()
+    initial_audio = audio.clone().to(device)
     with torch.inference_mode():
         for step in tqdm(range(steps)):
             # print(step)
