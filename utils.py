@@ -55,7 +55,7 @@ def create_optimizer_and_scheduler(model, dataloader, start_epoch, end_epoch, op
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer=optimizer,
-        max_lr=0.2,
+        max_lr=0.01,
         total_steps=len(dataloader) * (end_epoch - start_epoch),
         anneal_strategy='cos',
     )
