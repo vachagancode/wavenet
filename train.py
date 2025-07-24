@@ -53,7 +53,7 @@ def train(config, device):
                 src, tgt = src.float().to(device), tgt.long().to(device)
 
                 # Do the forward pass
-                logits = model(src)
+                logits = model(src) # [batch_size]
 
                 # Calculate the loss
                 # print(logits.permute(0, 2, 1).shape, tgt.shape)
@@ -154,3 +154,8 @@ def train(config, device):
     end_time = time.time()
 
     print(f"[INFO] Experiment was successfully finished in {(end_time  - start_time):.3f} seconds.")
+
+if __name__ == "__main__":
+    device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    config = get_config()
+    train(config, device)

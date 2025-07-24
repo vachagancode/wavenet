@@ -1,9 +1,11 @@
 import torch
 import torchaudio
 import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
 
 from pydub import AudioSegment
 from tqdm import tqdm
+
 
 from wavenet import create_wavenet
 from config import get_config
@@ -57,7 +59,7 @@ def create_optimizer_and_scheduler(model, dataloader, start_epoch, end_epoch, op
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer=optimizer,
-        max_lr=0.01,
+        max_lr=0.05,
         total_steps=len(dataloader) * (end_epoch - start_epoch),
         anneal_strategy='cos',
     )
@@ -73,13 +75,14 @@ def calculate_accuracy(logits, targets):
     total = 0
 
     # apply softmax to the logits
-    preds = F.softmax(logits, dim=-1).argmax(dim=-1)
-    total += preds.shape[-1]
+    preds = F.softmax(logits, dim=-1).argmax(-1)
+
+    total += preds.shape[1]
     correct += (preds == targets).sum()
 
-    accuracy = (correct.item() / total) * 100
+    accuracy = (correct / total) * 100
 
-    return accuracy
+    return accuracy.item()
 
 def create_summary_writer(model_name):
     writer_dir = f"./runs/{model_name}"
@@ -122,13 +125,3 @@ def generate_audio(input_path, model, device, mu_decoder, steps=88200):
         final = torch.cat([initial_audio, predictions], dim=-1).squeeze(0).to("cpu")
 
         torchaudio.save("./output.wav", final, sr, bits_per_sample=16)
-
-if __name__ == "__main__":
-    config = get_config()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = create_wavenet(config[0], device=device)
-    model_state_dict = torch.load("./m256k5v1_final.pth", map_location=device)["model_state_dict"]
-    model.load_state_dict(model_state_dict)
-
-    mu_decoder = torchaudio.transforms.MuLawDecoding(quantization_channels=256)
-    generate_audio("./test.wav", model, mu_decoder)
