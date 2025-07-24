@@ -1,95 +1,95 @@
 def get_config():
     hyperparameters = [
         {
-            "model_name": "model_256_256_5",
+            "model_name": "m256k5v1",
             "dconv_input": 16,
             "dconv_output": 16,
             "pconv_input": 16,
+            "pconv_hidden": 16,
+            "pconv_output": 256,
+            "kernel_size": 5,
+            "epochs": 20
+        },
+        {
+            "model_name": "m256k5v2",
+            "dconv_input": 16,
+            "dconv_output": 32,
+            "pconv_input": 32,
+            "pconv_hidden": 64,
+            "pconv_output": 256,
+            "kernel_size": 5,
+            "epochs": 20
+        },
+        {
+            "model_name": "m256k5v3",
+            "dconv_input": 32,
+            "dconv_output": 32,
+            "pconv_input": 32,
             "pconv_hidden": 32,
             "pconv_output": 256,
             "kernel_size": 5,
-            "epochs": 50
+            "epochs": 20
         },
-        # {
-        #     "model_name": "model_256_256_10",
-        #     "dconv_input": 1,
-        #     "dconv_output": 64,
-        #     "pconv_input": 64,
-        #     "pconv_hidden": 256,
-        #     "pconv_output": 256,
-        #     "kernel_size": 10,
-        #     "epochs": 50
-        # },
-        # {
-        #     "model_name": "model_256_256_15",
-        #     "dconv_input": 1,
-        #     "dconv_output": 64,
-        #     "pconv_input": 64,
-        #     "pconv_hidden": 256,
-        #     "pconv_output": 256,
-        #     "kernel_size": 15,
-        #     "epochs": 50
-        # },
-        # {
-        #     "model_name": "model_256_512_5",
-        #     "dconv_input": 1,
-        #     "dconv_output": 64,
-        #     "pconv_input": 64,
-        #     "pconv_hidden": 256,
-        #     "pconv_output": 512,
-        #     "kernel_size": 5,
-        #     "epochs": 50
-        # },
-        # {
-        #     "model_name": "model_256_512_10",
-        #     "dconv_input": 1,
-        #     "dconv_output": 64,
-        #     "pconv_input": 64,
-        #     "pconv_hidden": 256,
-        #     "pconv_output": 512,
-        #     "kernel_size": 10,
-        #     "epochs": 50
-        # },
-        # {
-        #     "model_name": "model_256_512_15",
-        #     "dconv_input": 1,
-        #     "dconv_output": 64,
-        #     "pconv_input": 64,
-        #     "pconv_hidden": 256,
-        #     "pconv_output": 512,
-        #     "kernel_size": 15,
-        #     "epochs": 50
-        # },
-        # {
-        #     "model_name": "model_512_256_5",
-        #     "dconv_input": 1,
-        #     "dconv_output": 64,
-        #     "pconv_input": 64,
-        #     "pconv_hidden": 512,
-        #     "pconv_output": 256,
-        #     "kernel_size": 5,
-        #     "epochs": 50
-        # },
-        # {
-        #     "model_name": "model_512_256_10",
-        #     "dconv_input": 1,
-        #     "dconv_output": 64,
-        #     "pconv_input": 64,
-        #     "pconv_hidden": 512,
-        #     "pconv_output": 256,
-        #     "kernel_size": 10,
-        #     "epochs": 50
-        # },
-        # {
-        #     "model_name": "model_512_256_15",
-        #     "dconv_input": 1,
-        #     "dconv_output": 64,
-        #     "pconv_input": 64,
-        #     "pconv_hidden": 512,
-        #     "pconv_output": 256,
-        #     "kernel_size": 15,
-        #     "epochs": 50
-        # },
+        {
+            "model_name": "m256k10v1",
+            "dconv_input": 16,
+            "dconv_output": 16,
+            "pconv_input": 16,
+            "pconv_hidden": 16,
+            "pconv_output": 256,
+            "kernel_size": 10,
+            "epochs": 20
+        },
+        {
+            "model_name": "m256k10v2",
+            "dconv_input": 16,
+            "dconv_output": 32,
+            "pconv_input": 32,
+            "pconv_hidden": 64,
+            "pconv_output": 256,
+            "kernel_size": 10,
+            "epochs": 20
+        },
+        {
+            "model_name": "m256k10v3",
+            "dconv_input": 32,
+            "dconv_output": 32,
+            "pconv_input": 32,
+            "pconv_hidden": 32,
+            "pconv_output": 256,
+            "kernel_size": 10,
+            "epochs": 20
+        },
+                {
+            "model_name": "m256k15v1",
+            "dconv_input": 16,
+            "dconv_output": 16,
+            "pconv_input": 16,
+            "pconv_hidden": 16,
+            "pconv_output": 256,
+            "kernel_size": 15,
+            "epochs": 20
+        },
+        {
+            "model_name": "m256k15v2",
+            "dconv_input": 16,
+            "dconv_output": 32,
+            "pconv_input": 32,
+            "pconv_hidden": 64,
+            "pconv_output": 256,
+            "kernel_size": 15,
+            "epochs": 20
+        },
+        {
+            "model_name": "m256k15v3",
+            "dconv_input": 32,
+            "dconv_output": 32,
+            "pconv_input": 32,
+            "pconv_hidden": 32,
+            "pconv_output": 256,
+            "kernel_size": 15,
+            "epochs": 20
+        }
     ]
 
     return hyperparameters

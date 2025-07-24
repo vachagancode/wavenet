@@ -36,6 +36,10 @@ def train(config, device):
         new_model_dir = model_config["model_name"]
         # create the directory for models to save
         os.mkdir(new_model_dir)
+
+        early_stopping_patience = 5
+        epochs_not_improved = 0
+
         for epoch in range(start_epoch, end_epoch):
 
             batch_loader = tqdm(train_dataloader)
@@ -82,7 +86,7 @@ def train(config, device):
 
             print(f"[INFO] Training Epoch: {epoch} | Loss: {epoch_loss:.4f} | Accuracy: {epoch_accuracy:.4f}%.")
 
-            if epoch % 5 == 0:
+            if epoch % 3 == 0:
                 # Do the validation
                 model.eval()
                 with torch.inference_mode():
@@ -113,18 +117,25 @@ def train(config, device):
 
                 print(f"[INFO] Validation Epoch: {epoch} | Loss: {epoch_valid_loss} | Accuracy: {epoch_valid_accuracy}%.")
 
-            # Save the model
-            if epoch_loss < previous_loss:
-                torch.save(
-                    obj={
-                        "model_state_dict": model.state_dict(),
-                        "optimizer_state_dict": optimizer.state_dict(),
-                        "scheduler_state_dict": scheduler.state_dict(),
-                        "train_loss": epoch_loss,
-                        "epoch": epoch
-                    },
-                    f=f"./{new_model_dir}/me{epoch}l{math.floor(epoch_loss*100)}.pth"
-                )
+                # Save the model
+                if epoch_valid_loss < previous_loss:
+                    torch.save(
+                        obj={
+                            "model_state_dict": model.state_dict(),
+                            "optimizer_state_dict": optimizer.state_dict(),
+                            "scheduler_state_dict": scheduler.state_dict(),
+                            "valid_loss": epoch_valid_loss,
+                            "epoch": epoch
+                        },
+                        f=f"./{new_model_dir}/me{epoch}l{math.floor(epoch_loss*100)}.pth"
+                    )
+                    previous_loss = epoch_valid_loss
+                else:
+                    epochs_not_improved += 1
+                    if epochs_not_improved > early_stopping_patience:
+                        print(f"[INFO] Training stopped at epoch {epoch} because the model is unable to improve.")
+                        print(f"[INFO] Starting the training of the other model.")
+                        break
 
         # Save the final models
         torch.save(
@@ -133,6 +144,7 @@ def train(config, device):
             },
             f=f"./models/{model_config['model_name']}_final.pth"
         )
+        writer.close()
 
     # Get the end time
     end_time = time.time()
