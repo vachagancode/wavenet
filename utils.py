@@ -119,7 +119,7 @@ def generate_audio(input_path, model, device, mu_decoder, steps=88200):
         predictions = torch.stack(predicted, dim=-1).squeeze(0)
 
         # Concatenate with the audio
-        final = torch.cat([initial_audio, predictions], dim=-1).squeeze(0)
+        final = torch.cat([initial_audio, predictions], dim=-1).squeeze(0).to("cpu")
 
         torchaudio.save("./output.wav", final, sr, bits_per_sample=16)
 
