@@ -87,7 +87,7 @@ def create_summary_writer(model_name):
     print(f"[INFO] SummaryWriter created in {writer_dir}.")
     return writer
 
-def generate_audio(input_path, model, mu_decoder, steps=500):
+def generate_audio(input_path, model, device, mu_decoder, steps=88200):
     predicted = []
     audio, sr = torchaudio.load(input_path)
     print(f"Sample Rate: {sr}")
