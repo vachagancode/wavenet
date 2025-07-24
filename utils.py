@@ -90,12 +90,13 @@ def create_summary_writer(model_name):
 def generate_audio(input_path, model, device, mu_decoder, steps=88200):
     predicted = []
     audio, sr = torchaudio.load(input_path)
+    audio = audio.to(device)
     print(f"Sample Rate: {sr}")
 
     if audio.shape[0] != 1:
         audio = audio.mean(0, keepdim=True)
     audio = audio.unsqueeze(0)
-    initial_audio = audio.clone().to(device)
+    initial_audio = audio.clone()
     with torch.inference_mode():
         for step in tqdm(range(steps)):
             # print(step)
