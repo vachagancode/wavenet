@@ -137,6 +137,10 @@ def train(config, device):
                         print(f"[INFO] Starting the training of the other model.")
                         break
 
+                # Clear cuda cache
+                if device == torch.device("cuda"):
+                    torch.cuda.empty_cache()
+
         # Save the final models
         torch.save(
             obj={

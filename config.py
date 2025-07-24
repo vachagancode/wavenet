@@ -8,7 +8,7 @@ def get_config():
             "pconv_hidden": 16,
             "pconv_output": 256,
             "kernel_size": 5,
-            "epochs": 20
+            "epochs": 50
         },
         {
             "model_name": "m256k5v2",
@@ -18,7 +18,7 @@ def get_config():
             "pconv_hidden": 64,
             "pconv_output": 256,
             "kernel_size": 5,
-            "epochs": 20
+            "epochs": 50
         },
         {
             "model_name": "m256k5v3",
@@ -28,7 +28,7 @@ def get_config():
             "pconv_hidden": 32,
             "pconv_output": 256,
             "kernel_size": 5,
-            "epochs": 20
+            "epochs": 50
         },
         {
             "model_name": "m256k10v1",
@@ -38,7 +38,7 @@ def get_config():
             "pconv_hidden": 16,
             "pconv_output": 256,
             "kernel_size": 10,
-            "epochs": 20
+            "epochs": 50
         },
         {
             "model_name": "m256k10v2",
@@ -48,7 +48,7 @@ def get_config():
             "pconv_hidden": 64,
             "pconv_output": 256,
             "kernel_size": 10,
-            "epochs": 20
+            "epochs": 50
         },
         {
             "model_name": "m256k10v3",
@@ -58,7 +58,7 @@ def get_config():
             "pconv_hidden": 32,
             "pconv_output": 256,
             "kernel_size": 10,
-            "epochs": 20
+            "epochs": 50
         },
                 {
             "model_name": "m256k15v1",
@@ -68,7 +68,7 @@ def get_config():
             "pconv_hidden": 16,
             "pconv_output": 256,
             "kernel_size": 15,
-            "epochs": 20
+            "epochs": 50
         },
         {
             "model_name": "m256k15v2",
@@ -78,7 +78,7 @@ def get_config():
             "pconv_hidden": 64,
             "pconv_output": 256,
             "kernel_size": 15,
-            "epochs": 20
+            "epochs": 50
         },
         {
             "model_name": "m256k15v3",
@@ -88,7 +88,7 @@ def get_config():
             "pconv_hidden": 32,
             "pconv_output": 256,
             "kernel_size": 15,
-            "epochs": 20
+            "epochs": 50
         }
     ]
 
