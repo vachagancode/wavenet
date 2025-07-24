@@ -114,6 +114,8 @@ def generate_audio(input_path, model, device, mu_decoder, steps=88200):
             predicted.append(prediction)
 
             audio = torch.cat([(audio[:, :, 1:]), prediction], dim=-1)
+            if step % 500 == 0:
+                torch.cuda.empty_cache()
         predictions = torch.stack(predicted, dim=-1).squeeze(0)
 
         # Concatenate with the audio
