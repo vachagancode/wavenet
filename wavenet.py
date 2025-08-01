@@ -1,12 +1,18 @@
+import time
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+import torchaudio
 
 from modules import DilatedCausalConvolutionalLayer, DilatedConvolutionalLayerStack, PostDilationLayer
 
 from dataset import create_dataloaders
 from tqdm import tqdm
 from config import get_config
+from decoding import greedy_decode
+
 
 class WaveNet(nn.Module):
     def __init__(self, dconv_input : int, dconv_output : int, dconv_hidden : int, pconv_input : int, pconv_hidden : int, pconv_output : int, kernel_size : int, *args, **kwargs):
@@ -14,6 +20,8 @@ class WaveNet(nn.Module):
         # self.embedding_layer = EmbeddingLayer(vocab_size=vocab_size, dim=embd_dim)
         self.dilated_conv_layer = DilatedConvolutionalLayerStack(in_channels=dconv_input, hidden_channels=dconv_hidden, out_channels=dconv_output, kernel_size=kernel_size)
         self.post_dilated_conv_layer = PostDilationLayer(in_channels=pconv_input, hidden_channels=pconv_hidden, out_channels=pconv_output)
+
+        self.mu_decoding = torchaudio.transforms.MuLawDecoding(quantization_channels=pconv_output)
 
     def forward(self, x):
         # x = self.embedding_layer(x)
@@ -23,7 +31,48 @@ class WaveNet(nn.Module):
 
         return x
 
+    def generate(self,
+                 x,
+                 initial_steps=None,
+                 num_steps=50,
+                 chunk_size=240000):
+
+        predictions = []
+
+        if initial_steps == None:
+            input_steps = torch.zeros((1, 1, chunk_size))
+        else:
+            if initial_steps.shape[-1] > chunk_size:
+                input_steps = initial_steps[:, :, initial_steps.shape[-1]-chunk_size:]
+            elif initial_steps.shape[-1] < chunk_size:
+                zero_pad = torch.zeros((1, 1, chunk_size - initial_steps.shape[-1]))
+                input_steps = torch.cat([zero_pad, initial_steps], dim=-1)
+
+        with torch.inference_mode():
+            s = time.time()
+            for step in range(num_steps):
+                # Do the forward pass
+                logits = self.forward(input_steps)
+
+
+                preds = F.softmax(logits, dim=-1)
+                arg_preds = greedy_decode(preds)
+                predictions.append(arg_preds[:, :, -1])
+
+                input_steps = torch.cat([input_steps[:, :, 1:], arg_preds[:, :, -1].unsqueeze(0)], dim=-1)
+
+            final_predictions = torch.stack(predictions)
+
+            e = time.time()
+
+            print(f"[INFO] Generation done in {(e-s):.3f} seconds.")
+
+            return final_predictions
+
+
+
 def create_wavenet(config, device=torch.device("cpu")):
+
     return WaveNet(
         dconv_input=config["dconv_input"],
         dconv_output=config["dconv_output"],
@@ -34,16 +83,17 @@ def create_wavenet(config, device=torch.device("cpu")):
         kernel_size=config["kernel_size"]
     ).to(device)
 
-if __name__ == "__main__":
-    config = get_config()
-    wavenet = create_wavenet(config)
-    _, valid_dataloader, _ = create_dataloaders()
 
-    batchloader = tqdm(valid_dataloader)
-    for batch in batchloader:
-        src, tgt = batch
-        src, tgt = src.float(), tgt.float()
-        print(src.shape)
-        logits = wavenet(src)
-        print(logits.shape)
-        break
+# if __name__ == "__main__":
+#     config = get_config()
+#     wavenet = create_wavenet(config)
+#     _, valid_dataloader, _ = create_dataloaders()
+
+#     batchloader = tqdm(valid_dataloader)
+#     for batch in batchloader:
+#         src, tgt = batch
+#         src, tgt = src.float(), tgt.float()
+#         print(src.shape)
+#         logits = wavenet(src)
+#         print(logits.shape)
+#         break

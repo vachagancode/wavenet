@@ -45,28 +45,29 @@ def create_dataloaders(quantization_channels):
 
     train_dataloader = DataLoader(
         dataset=train_set,
-        batch_size=8,
+        batch_size=4,
         shuffle=True,
         pin_memory=True
     )
 
     valid_dataloader = DataLoader(
         dataset=valid_set,
-        batch_size=8,
+        batch_size=4,
         shuffle=True,
         pin_memory=True,
     )
 
     test_dataloader = DataLoader(
         dataset=test_set,
-        batch_size=8,
+        batch_size=4,
         shuffle=False,
         pin_memory=True
     )
 
     return train_dataloader, valid_dataloader, test_dataloader
 
-
 if __name__ == "__main__":
-    a, _, _ = create_dataloaders(256)
-    print(next(iter(a)))
+    _, _, a = create_dataloaders(256)
+
+    i, o = next(iter(a))
+    print(i.shape)

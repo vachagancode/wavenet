@@ -14,6 +14,7 @@ from config import get_config
 def train(config, device):
     print("[INFO] Experiment started.")
     start_time = time.time()
+
     # Create the model
     for model_config in config:
         print("-----------------------------------------------------------------------")
@@ -80,7 +81,6 @@ def train(config, device):
                 epoch_loss += loss.item()
                 epoch_step += 1
 
-
             epoch_loss /= epoch_step
             epoch_accuracy /= epoch_step
 
@@ -136,6 +136,7 @@ def train(config, device):
                         print(f"[INFO] Training stopped at epoch {epoch} because the model is unable to improve.")
                         print(f"[INFO] Starting the training of the other model.")
                         break
+
 
                 # Clear cuda cache
                 if device == torch.device("cuda"):
