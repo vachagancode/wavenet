@@ -34,7 +34,7 @@ class WaveNet(nn.Module):
     def generate(self,
                  initial_steps=None,
                  num_steps=44100,
-                 chunk_size=22050):
+                 chunk_size=1000):
 
         predictions = []
         if initial_steps == None:
@@ -50,23 +50,25 @@ class WaveNet(nn.Module):
 
         with torch.inference_mode():
             s = time.time()
-            for step in range(num_steps):
+            for _ in tqdm(range(num_steps)):
                 # Do the forward pass
                 logits = self.forward(input_steps)
 
                 preds = F.softmax(logits, dim=-1)
                 arg_preds = greedy_decode(preds)
                 predictions.append(arg_preds[:, :, -1])
+                # print(predictions)
 
                 input_steps = torch.cat([input_steps[:, :, 1:], arg_preds[:, :, -1].unsqueeze(0)], dim=-1)
 
-            final_predictions = torch.stack(predictions)
+            final_predictions = torch.stack(predictions, dim=-1)
+            decoded = self.mu_decoding(final_predictions)
 
             e = time.time()
 
             print(f"[INFO] Generation done in {(e-s):.3f} seconds.")
 
-            return final_predictions
+            return decoded
 
 
 
@@ -81,18 +83,3 @@ def create_wavenet(config, device=torch.device("cpu")):
         pconv_output=config["pconv_output"],
         kernel_size=config["kernel_size"]
     ).to(device)
-
-
-# if __name__ == "__main__":
-#     config = get_config()
-#     wavenet = create_wavenet(config)
-#     _, valid_dataloader, _ = create_dataloaders()
-
-#     batchloader = tqdm(valid_dataloader)
-#     for batch in batchloader:
-#         src, tgt = batch
-#         src, tgt = src.float(), tgt.float()
-#         print(src.shape)
-#         logits = wavenet(src)
-#         print(logits.shape)
-#         break

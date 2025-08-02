@@ -34,19 +34,6 @@ def train(config, device):
         optimizer, scheduler = create_optimizer_and_scheduler(model, train_dataloader, start_epoch, end_epoch)
 
         loss_fn = nn.CrossEntropyLoss()
-        new_model_dir = model_config["model_name"]
-        # create the directory for models to save
-        os.mkdir(new_model_dir)
-
-        early_stopping_patience = 5
-        epochs_not_improved = 0
-
-        for epoch in range(start_epoch, end_epoch):
-
-            batch_loader = tqdm(train_dataloader)
-            epoch_loss = 0
-            epoch_accuracy = 0
-            epoch_step = 0
             for batch in batch_loader:
                 model.train()
 
@@ -64,8 +51,8 @@ def train(config, device):
                 writer.add_scalar("Train/Loss", loss.item(), global_step=epoch)
                 writer.add_scalar("Train/Accuracy", accuracy, global_step=epoch)
 
-
-                batch_loader.set_postfix({"Loss": loss.item(), "Accuracy": accuracy})
+                learning_rate = optimizer.param_groups[0]['lr']
+                batch_loader.set_postfix({"Loss": loss.item(), "Accuracy": accuracy, "Learning Rate": learning_rate})
 
                 # Optimizer zero grad
                 optimizer.zero_grad()
@@ -78,7 +65,6 @@ def train(config, device):
 
                 # Optimizer + LR_Scheduler step
                 optimizer.step()
-                scheduler.step()
 
                 epoch_accuracy += accuracy
                 epoch_loss += loss.item()
@@ -87,7 +73,7 @@ def train(config, device):
             epoch_loss /= epoch_step
             epoch_accuracy /= epoch_step
 
-            print(f"[INFO] Training Epoch: {epoch} | Loss: {epoch_loss:.4f} | Accuracy: {epoch_accuracy:.4f}%.")
+            print(f"[INFO] Training Epoch: {epoch} | Loss: {epoch_loss:.4f} | Accuracy: {epoch_accuracy:.4f}%. | Learning Rate: {learning_rate}")
 
             if epoch % 2 == 0:
                 # Do the validation
@@ -117,6 +103,7 @@ def train(config, device):
 
                     epoch_valid_loss /= epoch_valid_step
                     epoch_valid_accuracy /= epoch_valid_step
+                    scheduler.step(epoch_valid_loss)
 
                 print(f"[INFO] Validation Epoch: {epoch} | Loss: {epoch_valid_loss} | Accuracy: {epoch_valid_accuracy}%.")
 

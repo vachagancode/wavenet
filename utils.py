@@ -50,11 +50,9 @@ def sample_from_model(config : dict, path : str = None, length : int = 5, device
 
 def create_optimizer_and_scheduler(model, dataloader, start_epoch, end_epoch, optimizer_state_dict=None, scheduler_state_dict=None):
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.0001)
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer=optimizer,
-        max_lr=0.05,
-        total_steps=len(dataloader) * (end_epoch - start_epoch),
-        anneal_strategy='cos',
+        factor=0.5
     )
 
     if optimizer_state_dict is not None and scheduler_state_dict is not None:
@@ -85,6 +83,7 @@ def create_summary_writer(model_name):
 
 def save_generated_audio(audio, path, sr):
     if audio.ndim == 3:
-        audio = audio.squeeze(0) # squeeze the batch dimension
-    torchaudio.save(path, audio, sample_rate=sr)
+        audio_save = audio.squeeze(0) # squeeze the batch dimension
+    print(audio_save.shape)
+    torchaudio.save(path, audio_save, sample_rate=sr)
     print(f"[INFO] Audio sucessfully saved to: {path}.")

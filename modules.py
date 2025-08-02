@@ -31,6 +31,8 @@ class DilatedCausalConvolutionalLayer(nn.Module):
         self.skip_conv_1x1 = nn.Conv1d(in_channels=self.hidden_channels, out_channels=self.out_channels, kernel_size=1)
         self.residual_connections = lambda x, y: x + y
 
+        self.dropout = nn.Dropout(0.35)
+
     def forward(self, x):
         if self.dilation_rate == 1:
 
@@ -44,8 +46,10 @@ class DilatedCausalConvolutionalLayer(nn.Module):
         # pass through activations
         x_act = self.tanh(x_conv) * self.sigmoid(x_conv)
 
-        x_1x1 = self.conv_1x1(x_act)
-        skip_1x1 = self.skip_conv_1x1(x_act)
+        x_act_dropout = self.dropout(x_act)
+
+        x_1x1 = self.conv_1x1(x_act_dropout)
+        skip_1x1 = self.skip_conv_1x1(x_act_dropout)
 
         x = self.residual_connections(x_1x1, x)
         return x, skip_1x1
@@ -53,7 +57,7 @@ class DilatedCausalConvolutionalLayer(nn.Module):
 class DilatedConvolutionalLayerStack(nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, kernel_size, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dilations = [2**i for i in range(10)]
+        self.dilations = [2**i for i in range(6)]
         self.stack = nn.ModuleList()
         for ix, dilation in enumerate(self.dilations):
             if ix == 0:
