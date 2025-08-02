@@ -29,6 +29,8 @@ def train(config, device):
 
         new_model_dir = model_config["model_name"]
 
+        os.mkdir(new_model_dir)
+
         start_epoch = 0
         end_epoch = start_epoch + model_config["epochs"]
         previous_loss = float("inf")
