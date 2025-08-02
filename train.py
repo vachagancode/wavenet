@@ -84,6 +84,7 @@ def train(config, device):
 
             epoch_loss /= epoch_step
             epoch_accuracy /= epoch_step
+            scheduler.step(epoch_loss)
 
             print(f"[INFO] Training Epoch: {epoch} | Loss: {epoch_loss:.4f} | Accuracy: {epoch_accuracy:.4f}%. | Learning Rate: {learning_rate}")
 
@@ -115,7 +116,7 @@ def train(config, device):
 
                     epoch_valid_loss /= epoch_valid_step
                     epoch_valid_accuracy /= epoch_valid_step
-                    scheduler.step(epoch_valid_loss)
+
 
                 print(f"[INFO] Validation Epoch: {epoch} | Loss: {epoch_valid_loss} | Accuracy: {epoch_valid_accuracy}%.")
 
