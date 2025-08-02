@@ -32,13 +32,11 @@ class WaveNet(nn.Module):
         return x
 
     def generate(self,
-                 x,
                  initial_steps=None,
-                 num_steps=50,
-                 chunk_size=240000):
+                 num_steps=44100,
+                 chunk_size=22050):
 
         predictions = []
-
         if initial_steps == None:
             input_steps = torch.zeros((1, 1, chunk_size))
         else:
@@ -47,13 +45,14 @@ class WaveNet(nn.Module):
             elif initial_steps.shape[-1] < chunk_size:
                 zero_pad = torch.zeros((1, 1, chunk_size - initial_steps.shape[-1]))
                 input_steps = torch.cat([zero_pad, initial_steps], dim=-1)
+            else:
+                input_steps = initial_steps.unsqueeze(0)
 
         with torch.inference_mode():
             s = time.time()
             for step in range(num_steps):
                 # Do the forward pass
                 logits = self.forward(input_steps)
-
 
                 preds = F.softmax(logits, dim=-1)
                 arg_preds = greedy_decode(preds)

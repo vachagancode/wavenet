@@ -25,7 +25,7 @@ def train(config, device):
 
         model = create_wavenet(model_config, device)
 
-        train_dataloader, _, _ = create_dataloaders(model_config["pconv_output"])
+        train_dataloader, validation_dataloader, _ = create_dataloaders(model_config["pconv_output"])
 
         start_epoch = 0
         end_epoch = start_epoch + model_config["epochs"]
@@ -73,6 +73,9 @@ def train(config, device):
                 # Loss Backwards
                 loss.backward()
 
+                # Apply gradient clipping
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
                 # Optimizer + LR_Scheduler step
                 optimizer.step()
                 scheduler.step()
@@ -86,11 +89,11 @@ def train(config, device):
 
             print(f"[INFO] Training Epoch: {epoch} | Loss: {epoch_loss:.4f} | Accuracy: {epoch_accuracy:.4f}%.")
 
-            if epoch % 3 == 0:
+            if epoch % 2 == 0:
                 # Do the validation
                 model.eval()
                 with torch.inference_mode():
-                    valid_batch_loader = tqdm(train_dataloader)
+                    valid_batch_loader = tqdm(validation_dataloader)
                     epoch_valid_loss = 0
                     epoch_valid_accuracy = 0
                     epoch_valid_step = 0

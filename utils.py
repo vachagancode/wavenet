@@ -8,7 +8,6 @@ from tqdm import tqdm
 
 from config import get_config
 
-
 def trim_audio(path : str, chunk_size : int = 5000):
     audio = AudioSegment.from_file(path)
     audio = audio.set_channels(1)
@@ -50,7 +49,7 @@ def sample_from_model(config : dict, path : str = None, length : int = 5, device
     return output
 
 def create_optimizer_and_scheduler(model, dataloader, start_epoch, end_epoch, optimizer_state_dict=None, scheduler_state_dict=None):
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.0001)
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer=optimizer,
         max_lr=0.05,
@@ -71,7 +70,7 @@ def calculate_accuracy(logits, targets):
     # apply softmax to the logits
     preds = F.softmax(logits, dim=-1).argmax(-1)
 
-    total += logits.shape[1]
+    total += logits.shape[1] * logits.shape[0]
     correct += (preds == targets).sum()
 
     accuracy = (correct / total) * 100
@@ -83,3 +82,9 @@ def create_summary_writer(model_name):
     writer = SummaryWriter(log_dir=writer_dir)
     print(f"[INFO] SummaryWriter created in {writer_dir}.")
     return writer
+
+def save_generated_audio(audio, path, sr):
+    if audio.ndim == 3:
+        audio = audio.squeeze(0) # squeeze the batch dimension
+    torchaudio.save(path, audio, sample_rate=sr)
+    print(f"[INFO] Audio sucessfully saved to: {path}.")
