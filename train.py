@@ -27,6 +27,8 @@ def train(config, device):
 
         train_dataloader, validation_dataloader, _ = create_dataloaders(model_config["pconv_output"])
 
+        new_model_dir = model_config["model_name"]
+
         start_epoch = 0
         end_epoch = start_epoch + model_config["epochs"]
         previous_loss = float("inf")
@@ -83,7 +85,6 @@ def train(config, device):
 
             print(f"[INFO] Training Epoch: {epoch} | Loss: {epoch_loss:.4f} | Accuracy: {epoch_accuracy:.4f}%. | Learning Rate: {learning_rate}")
 
-            new_model_dir =
             if epoch % 2 == 0:
                 # Do the validation
                 model.eval()
