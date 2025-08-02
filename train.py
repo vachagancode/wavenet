@@ -31,10 +31,18 @@ def train(config, device):
         end_epoch = start_epoch + model_config["epochs"]
         previous_loss = float("inf")
 
+        early_stopping_patience = 7
+        epochs_not_improved = 0
+
         optimizer, scheduler = create_optimizer_and_scheduler(model, train_dataloader, start_epoch, end_epoch)
 
         loss_fn = nn.CrossEntropyLoss()
-            for batch in batch_loader:
+        for epoch in range(start_epoch, end_epoch):
+            train_batchloader = tqdm(train_dataloader)
+            epoch_accuracy = 0
+            epoch_loss = 0
+            epoch_step = 0
+            for batch in train_batchloader:
                 model.train()
 
                 src, tgt = batch
@@ -52,7 +60,7 @@ def train(config, device):
                 writer.add_scalar("Train/Accuracy", accuracy, global_step=epoch)
 
                 learning_rate = optimizer.param_groups[0]['lr']
-                batch_loader.set_postfix({"Loss": loss.item(), "Accuracy": accuracy, "Learning Rate": learning_rate})
+                train_batchloader.set_postfix({"Loss": loss.item(), "Accuracy": accuracy, "Learning Rate": learning_rate})
 
                 # Optimizer zero grad
                 optimizer.zero_grad()
@@ -75,6 +83,7 @@ def train(config, device):
 
             print(f"[INFO] Training Epoch: {epoch} | Loss: {epoch_loss:.4f} | Accuracy: {epoch_accuracy:.4f}%. | Learning Rate: {learning_rate}")
 
+            new_model_dir =
             if epoch % 2 == 0:
                 # Do the validation
                 model.eval()
