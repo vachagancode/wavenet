@@ -1,4 +1,5 @@
 import time
+from collections import deque
 
 import torch
 import torch.nn as nn
@@ -15,13 +16,15 @@ from decoding import greedy_decode
 
 
 class WaveNet(nn.Module):
-    def __init__(self, dconv_input : int, dconv_output : int, dconv_hidden : int, pconv_input : int, pconv_hidden : int, pconv_output : int, kernel_size : int, *args, **kwargs):
+    def __init__(self, dconv_input : int, dconv_output : int, dconv_hidden : int, pconv_input : int, pconv_hidden : int, pconv_output : int, num_dilated : int, kernel_size : int, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # self.embedding_layer = EmbeddingLayer(vocab_size=vocab_size, dim=embd_dim)
-        self.dilated_conv_layer = DilatedConvolutionalLayerStack(in_channels=dconv_input, hidden_channels=dconv_hidden, out_channels=dconv_output, kernel_size=kernel_size)
+        self.dilated_conv_layer = DilatedConvolutionalLayerStack(in_channels=dconv_input, hidden_channels=dconv_hidden, out_channels=dconv_output, kernel_size=kernel_size, num_dilated=num_dilated)
         self.post_dilated_conv_layer = PostDilationLayer(in_channels=pconv_input, hidden_channels=pconv_hidden, out_channels=pconv_output)
 
         self.mu_decoding = torchaudio.transforms.MuLawDecoding(quantization_channels=pconv_output)
+
+        self.dilation_queues = [deque(torch.zeros(), maxlen=kernel_size*d) for d in [1, 2, 4, 8, 16, 32]]
 
     def forward(self, x):
         # x = self.embedding_layer(x)
@@ -31,12 +34,7 @@ class WaveNet(nn.Module):
 
         return x
 
-    def generate(self,
-                 initial_steps=None,
-                 num_steps=44100,
-                 chunk_size=1000):
-
-        predictions = []
+    def create_input_steps(self, initial_steps=None, chunk_size=16000):
         if initial_steps == None:
             input_steps = torch.zeros((1, 1, chunk_size))
         else:
@@ -47,6 +45,15 @@ class WaveNet(nn.Module):
                 input_steps = torch.cat([zero_pad, initial_steps], dim=-1)
             else:
                 input_steps = initial_steps.unsqueeze(0)
+
+        return input_steps
+    def generate(self,
+                 initial_steps=None,
+                 num_steps=44100,
+                 chunk_size=16000):
+
+        predictions = []
+        input_steps = self.create_input_steps(initial_steps=initial_steps, chunk_size=chunk_size)
 
         with torch.inference_mode():
             s = time.time()
@@ -70,10 +77,18 @@ class WaveNet(nn.Module):
 
             return decoded
 
+    # def generate_fast(self,
+    #                   initial_steps=None,
+    #                   num_steps=44100,
+    #                   chunk_size=16000,
+    #                   ):
+
+    #     predictions = []
+    #     input_steps = self.create_input_steps(initial_steps=initial_steps, chunk_size=chunk_size)
+
 
 
 def create_wavenet(config, device=torch.device("cpu")):
-
     return WaveNet(
         dconv_input=config["dconv_input"],
         dconv_output=config["dconv_output"],

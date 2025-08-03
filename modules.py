@@ -55,9 +55,9 @@ class DilatedCausalConvolutionalLayer(nn.Module):
         return x, skip_1x1
 
 class DilatedConvolutionalLayerStack(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, kernel_size, *args, **kwargs):
+    def __init__(self, in_channels, hidden_channels, out_channels, kernel_size, num_dilated, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dilations = [2**i for i in range(6)]
+        self.dilations = [2**i for i in range(num_dilated)]
         self.stack = nn.ModuleList()
         for ix, dilation in enumerate(self.dilations):
             if ix == 0:

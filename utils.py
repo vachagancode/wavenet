@@ -21,38 +21,12 @@ def trim_audio(path : str, chunk_size : int = 5000):
         filename = int(i/chunk_size)
         chunk.export(f"data/{filename}.wav", format='wav')
 
-def sample_from_model(config : dict, path : str = None, length : int = 5, device : torch.device = torch.device("cpu")): # if path to the file is specified then use the file to sample from
-    if path is not None:
-        start_sample, sr = torchaudio.load(path, normalize=False)
-        start_sample = start_sample.float().unsqueeze(0) # cast to float 32 and add the batch dimension
-    else:
-        # create a 0 tensor
-        start_sample = torch.zeros(1, 1, 15)
-
-    model = create_wavenet(config, device)
-    model_outputs = [start_sample]
-
-    for _ in range(length):
-        model.eval()
-        with torch.inference_mode():
-            # Forward pass
-            logits = model(start_sample)
-
-            # Do the decoding
-            decoded_data =  greedy_decode(logits)
-            start_sample = decoded_data.float()
-
-            model_outputs.append(decoded_data)
-
-    output = torch.cat(tuple(model_outputs), dim=-1).squeeze(0)
-
-    return output
-
 def create_optimizer_and_scheduler(model, dataloader, start_epoch, end_epoch, optimizer_state_dict=None, scheduler_state_dict=None):
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.005)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer=optimizer,
-        factor=0.5
+        factor=0.1,
+        patience=2
     )
 
     if optimizer_state_dict is not None and scheduler_state_dict is not None:
