@@ -24,7 +24,7 @@ class WaveNet(nn.Module):
 
         self.mu_decoding = torchaudio.transforms.MuLawDecoding(quantization_channels=pconv_output)
 
-        self.dilation_queues = [deque(torch.zeros(), maxlen=kernel_size*d) for d in [1, 2, 4, 8, 16, 32]]
+        # self.dilation_queues = [deque(torch.zeros(), maxlen=kernel_size*d) for d in [1, 2, 4, 8, 16, 32]]
 
     def forward(self, x):
         # x = self.embedding_layer(x)
@@ -76,16 +76,6 @@ class WaveNet(nn.Module):
             print(f"[INFO] Generation done in {(e-s):.3f} seconds.")
 
             return decoded
-
-    # def generate_fast(self,
-    #                   initial_steps=None,
-    #                   num_steps=44100,
-    #                   chunk_size=16000,
-    #                   ):
-
-    #     predictions = []
-    #     input_steps = self.create_input_steps(initial_steps=initial_steps, chunk_size=chunk_size)
-
 
 
 def create_wavenet(config, device=torch.device("cpu")):
