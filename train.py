@@ -155,7 +155,7 @@ def train(config, device):
             )
             writer.close()
         except Exception as e:
-            print("An error occurred while training the model and for that reason skipping the training of current model.")
+            print("[ERROR] An error occurred while training the model and for that reason skipping the training of current model.")
             print(e)
             torch.cuda.empty_cache()
             continue

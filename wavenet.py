@@ -96,5 +96,6 @@ def create_wavenet(config, device=torch.device("cpu")):
         pconv_input=config["pconv_input"],
         pconv_hidden=config["pconv_hidden"],
         pconv_output=config["pconv_output"],
-        kernel_size=config["kernel_size"]
+        kernel_size=config["kernel_size"],
+        num_dilated=6
     ).to(device)
