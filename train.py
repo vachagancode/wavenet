@@ -11,34 +11,57 @@ from dataset import create_dataloaders
 from utils import create_optimizer_and_scheduler, calculate_accuracy, create_summary_writer
 from config import get_config
 
-def train(config, device):
+def train(config, device, m=None):
     print("[INFO] Experiment started.")
     start_time = time.time()
+
+    mpath, mname = m
+    if m is not None:
+        # Load the data
+        data = torch.load(f=mpath, map_location=device, weights_only=True)
 
     # Create the model
     for model_config in config:
         print("-----------------------------------------------------------------------")
         print(f"[INFO] Model name: {model_config['model_name']}.")
-
         # Create the writer
+
         writer = create_summary_writer(model_config["model_name"])
 
+        if mname != model_config["model_name"]:
+            continue
+
         model = create_wavenet(model_config, device)
+
+        # now load the data
+        if mname == model_config["model_name"]:
+            model.load_state_dict(data["model_state_dict"])
+            optimizer_state_dict, scheduler_state_dict = data["optimizer_state_dict"], data["scheduler_state_dict"]
+            start_epoch = data["epoch"]
+        else:
+            optimizer_state_dict = None
+            scheduler_state_dict = None
+            start_epoch = 0
+
 
         train_dataloader, validation_dataloader, _ = create_dataloaders(model_config["pconv_output"])
 
         new_model_dir = model_config["model_name"]
 
-        os.mkdir(new_model_dir)
-
-        start_epoch = 0
+        try:
+            os.mkdir(new_model_dir)
+        except OSError:
+            print(f"[INFO] The directory: {new_model_dir} already exists, deleting it and creating a new one.")
+            os.rmdir(new_model_dir)
+            os.mkdir(new_model_dir)
+        
         end_epoch = start_epoch + model_config["epochs"]
         previous_loss = float("inf")
 
-        early_stopping_patience = 7
+        early_stopping_patience = 10
         epochs_not_improved = 0
 
-        optimizer, scheduler = create_optimizer_and_scheduler(model, train_dataloader, start_epoch, end_epoch)
+        optimizer, scheduler = create_optimizer_and_scheduler(model, train_dataloader, start_epoch, end_epoch, optimizer_state_dict=optimizer_state_dict, scheduler_state_dict=scheduler_state_dict)
 
         loss_fn = nn.CrossEntropyLoss()
         try:
@@ -61,9 +84,6 @@ def train(config, device):
                     loss = loss_fn(logits.permute(0, 2, 1), tgt.squeeze(1))
                     accuracy = calculate_accuracy(logits, tgt.squeeze(1))
 
-                    writer.add_scalar("Train/Loss", loss.item(), global_step=epoch)
-                    writer.add_scalar("Train/Accuracy", accuracy, global_step=epoch)
-
                     learning_rate = optimizer.param_groups[0]['lr']
                     train_batchloader.set_postfix({"Loss": loss.item(), "Accuracy": accuracy, "Learning Rate": learning_rate})
 
@@ -83,8 +103,11 @@ def train(config, device):
                     epoch_loss += loss.item()
                     epoch_step += 1
 
-                epoch_loss /= epoch_step
                 epoch_accuracy /= epoch_step
+                epoch_loss /= epoch_step
+
+                writer.add_scalar("Train/Loss", epoch_loss, global_step=epoch)
+                writer.add_scalar("Train/Accuracy", epoch_accuracy, global_step=epoch)
                 scheduler.step(epoch_loss)
 
                 print(f"[INFO] Training Epoch: {epoch} | Loss: {epoch_loss:.4f} | Accuracy: {epoch_accuracy:.4f}%. | Learning Rate: {learning_rate}")
@@ -112,13 +135,13 @@ def train(config, device):
                             epoch_valid_loss += valid_loss.item()
                             epoch_valid_accuracy += valid_accuracy
 
-                            writer.add_scalar("Validation/Loss", valid_loss.item(), global_step=epoch)
-                            writer.add_scalar("Validaion/Accuracy", valid_accuracy, global_step=epoch)
 
                         epoch_valid_loss /= epoch_valid_step
                         epoch_valid_accuracy /= epoch_valid_step
 
 
+                        writer.add_scalar("Validation/Loss", valid_loss.item(), global_step=epoch)
+                        writer.add_scalar("Validation/Accuracy", valid_accuracy, global_step=epoch)
                     print(f"[INFO] Validation Epoch: {epoch} | Loss: {epoch_valid_loss} | Accuracy: {epoch_valid_accuracy}%.")
 
                     # Save the model
@@ -165,7 +188,3 @@ def train(config, device):
 
     print(f"[INFO] Experiment was successfully finished in {(end_time  - start_time):.3f} seconds.")
 
-if __name__ == "__main__":
-    device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    config = get_config()
-    train(config, device)

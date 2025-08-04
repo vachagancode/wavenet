@@ -25,7 +25,7 @@ def create_optimizer_and_scheduler(model, dataloader, start_epoch, end_epoch, op
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.005)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer=optimizer,
-        factor=0.1,
+        factor=0.35,
         patience=2
     )
 
@@ -60,4 +60,4 @@ def save_generated_audio(audio, path, sr):
         audio_save = audio.squeeze(0) # squeeze the batch dimension
     print(audio_save.shape)
     torchaudio.save(path, audio_save, sample_rate=sr)
-    print(f"[INFO] Audio sucessfully saved to: {path}.")
+    print(f"[INFO] Audio successfully saved to: {path}.")

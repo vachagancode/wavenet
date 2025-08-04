@@ -14,7 +14,6 @@ from tqdm import tqdm
 from config import get_config
 from decoding import greedy_decode
 
-
 class WaveNet(nn.Module):
     def __init__(self, dconv_input : int, dconv_output : int, dconv_hidden : int, pconv_input : int, pconv_hidden : int, pconv_output : int, num_dilated : int, kernel_size : int, *args, **kwargs):
         super().__init__(*args, **kwargs)
