@@ -15,7 +15,7 @@ def train(config, device, m=None):
     print("[INFO] Experiment started.")
     start_time = time.time()
 
-    mpath, mname = m
+    mpath, mname = m if m != None else (None, None)
     if m is not None:
         # Load the data
         data = torch.load(f=mpath, map_location=device, weights_only=True)
@@ -28,21 +28,22 @@ def train(config, device, m=None):
 
         writer = create_summary_writer(model_config["model_name"])
 
-        if mname != model_config["model_name"]:
-            continue
 
         model = create_wavenet(model_config, device)
 
-        # now load the data
-        if mname == model_config["model_name"]:
-            model.load_state_dict(data["model_state_dict"])
-            # optimizer_state_dict, scheduler_state_dict = data["optimizer_state_dict"], data["scheduler_state_dict"]
-            optimizer_state_dict, scheduler_state_dict = None, None
-            start_epoch = data["epoch"]
-        else:
-            optimizer_state_dict = None
-            scheduler_state_dict = None
-            start_epoch = 0
+        if mname != None:
+            if mname != model_config["model_name"]:
+                continue
+            # now load the data
+            if mname == model_config["model_name"]:
+                model.load_state_dict(data["model_state_dict"])
+                # optimizer_state_dict, scheduler_state_dict = data["optimizer_state_dict"], data["scheduler_state_dict"]
+                optimizer_state_dict, scheduler_state_dict = None, None
+                start_epoch = data["epoch"]
+            else:
+                optimizer_state_dict = None
+                scheduler_state_dict = None
+                start_epoch = 0
 
 
         train_dataloader, validation_dataloader, _ = create_dataloaders(model_config["pconv_output"])
