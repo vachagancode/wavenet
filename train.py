@@ -40,10 +40,10 @@ def train(config, device, m=None):
                 # optimizer_state_dict, scheduler_state_dict = data["optimizer_state_dict"], data["scheduler_state_dict"]
                 optimizer_state_dict, scheduler_state_dict = None, None
                 start_epoch = data["epoch"]
-            else:
-                optimizer_state_dict = None
-                scheduler_state_dict = None
-                start_epoch = 0
+        else:
+            optimizer_state_dict = None
+            scheduler_state_dict = None
+            start_epoch = 0
 
 
         train_dataloader, validation_dataloader, _ = create_dataloaders(model_config["pconv_output"])
