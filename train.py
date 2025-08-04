@@ -36,7 +36,8 @@ def train(config, device, m=None):
         # now load the data
         if mname == model_config["model_name"]:
             model.load_state_dict(data["model_state_dict"])
-            optimizer_state_dict, scheduler_state_dict = data["optimizer_state_dict"], data["scheduler_state_dict"]
+            # optimizer_state_dict, scheduler_state_dict = data["optimizer_state_dict"], data["scheduler_state_dict"]
+            optimizer_state_dict, scheduler_state_dict = None, None
             start_epoch = data["epoch"]
         else:
             optimizer_state_dict = None
