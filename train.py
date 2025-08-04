@@ -158,12 +158,6 @@ def train(config, device, m=None):
                             f=f"./{new_model_dir}/me{epoch}l{math.floor(epoch_loss*100)}.pth"
                         )
                         previous_loss = epoch_valid_loss
-                    else:
-                        epochs_not_improved += 1
-                        if epochs_not_improved > early_stopping_patience:
-                            print(f"[INFO] Training stopped at epoch {epoch} because the model is unable to improve.")
-                            print(f"[INFO] Starting the training of the other model.")
-                            break
 
 
                     # Clear cuda cache

@@ -22,11 +22,11 @@ def trim_audio(path : str, chunk_size : int = 5000):
         chunk.export(f"data/{filename}.wav", format='wav')
 
 def create_optimizer_and_scheduler(model, dataloader, start_epoch, end_epoch, optimizer_state_dict=None, scheduler_state_dict=None):
-    optimizer = torch.optim.AdamW(model.parameters(), lr=0.005)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer=optimizer,
-        factor=0.35,
-        patience=2
+        factor=0.75,
+        patience=3
     )
 
     if optimizer_state_dict is not None and scheduler_state_dict is not None:
