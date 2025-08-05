@@ -84,7 +84,7 @@ def collate_fn(batch):
     
     # <-- Trimming the Mel Spectrograms -->
     mel_lengths = [ms.shape[-1] for ms in list(mel_spectrograms)]
-    print(mel_lengths)
+    # print(mel_lengths)
     mel_min_length = min(mel_lengths)
     trimmed_mel_spectrograms.append(mel_spectrograms[min_ix])
     for mel_spectrogram in mel_spectrograms:
