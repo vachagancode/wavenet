@@ -46,7 +46,7 @@ def train(config, device, m=None):
             start_epoch = 0
 
 
-        train_dataloader, validation_dataloader, _ = create_dataloaders(model_config["pconv_output"])
+        train_dataloader, validation_dataloader, test_dataloader = create_dataloaders(model_config["pconv_output"])
 
         new_model_dir = model_config["model_name"]
 
@@ -68,7 +68,7 @@ def train(config, device, m=None):
         loss_fn = nn.CrossEntropyLoss()
         try:
             for epoch in range(start_epoch, end_epoch):
-                train_batchloader = tqdm(train_dataloader)
+                train_batchloader = tqdm(validation_dataloader) # ! Changed for simple training
                 epoch_accuracy = 0
                 epoch_loss = 0
                 epoch_step = 0

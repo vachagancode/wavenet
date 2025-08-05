@@ -3,21 +3,11 @@ import torchaudio
 import torch.nn as nn
 import torch.nn.functional as F
 
-# First layer, embedding layer
-# class EmbeddingLayer(nn.Module):
-#     def __init__(self, vocab_size : int,  dim : int = 128, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.vocab_size = vocab_size
-#         self.dim = dim
-#         self.embedding = nn.Embedding(num_embeddings=self.vocab_size,  embedding_dim=self.dim)
-
-#     def forward(self, x):
-#         return self.embedding(x)
-
 class DilatedCausalConvolutionalLayer(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, kernel_size, dilation_rate, *args, **kwargs):
+    def __init__(self, in_channels, in_conditional, hidden_channels, out_channels, kernel_size, dilation_rate, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.in_channels = in_channels
+        self.in_conditional = in_conditional
         self.hidden_channels = hidden_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
@@ -31,18 +21,21 @@ class DilatedCausalConvolutionalLayer(nn.Module):
         self.skip_conv_1x1 = nn.Conv1d(in_channels=self.hidden_channels, out_channels=self.out_channels, kernel_size=1)
         self.residual_connections = lambda x, y: x + y
 
+        self.condition_conv = nn.Conv1d(in_channels=self.in_conditional, out_channels=self.hidden_channels, kernel_size=1, padding=0)
+
         self.dropout = nn.Dropout(0.35)
 
-    def forward(self, x):
+    def forward(self, x, condition):
         if self.dilation_rate == 1:
-
             # x = x.permute(0, 2, 1)
             pass
 
         # apply padding manually
         x_padded = F.pad(x, (self.causal_padding, 0))
 
+        x_condition_conv = self.condition_conv(condition)
         x_conv = self.conv_layer_1(x_padded)
+        x_conv = x_conv + x_condition_conv
         # pass through activations
         x_act = self.tanh(x_conv) * self.sigmoid(x_conv)
 
@@ -54,23 +47,24 @@ class DilatedCausalConvolutionalLayer(nn.Module):
         x = self.residual_connections(x_1x1, x)
         return x, skip_1x1
 
+
 class DilatedConvolutionalLayerStack(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, kernel_size, num_dilated, *args, **kwargs):
+    def __init__(self, in_channels, in_conditional, hidden_channels, out_channels, kernel_size, num_dilated, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dilations = [2**i for i in range(num_dilated)]
         self.stack = nn.ModuleList()
         for ix, dilation in enumerate(self.dilations):
             if ix == 0:
-                layer = DilatedCausalConvolutionalLayer(in_channels=1, out_channels=out_channels, hidden_channels=hidden_channels, kernel_size=kernel_size, dilation_rate=dilation)
+                layer = DilatedCausalConvolutionalLayer(in_channels=1, in_conditional=in_conditional, out_channels=out_channels, hidden_channels=hidden_channels, kernel_size=kernel_size, dilation_rate=dilation)
             else:
-                layer = DilatedCausalConvolutionalLayer(in_channels=in_channels, out_channels=out_channels, hidden_channels=hidden_channels, kernel_size=kernel_size, dilation_rate=dilation)
+                layer = DilatedCausalConvolutionalLayer(in_channels=in_channels, in_conditional=in_conditional, out_channels=out_channels, hidden_channels=hidden_channels, kernel_size=kernel_size, dilation_rate=dilation)
             self.stack.append(layer)
 
-    def forward(self, x):
+    def forward(self, x, condition):
         global_skip_connections = []
         for layer in self.stack:
             # pass through the layers
-            output, skip_connection = layer(x)
+            output, skip_connection = layer(x, condition)
 
             global_skip_connections.append(skip_connection)
             x = output
