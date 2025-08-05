@@ -68,7 +68,7 @@ def train(config, device, m=None):
         loss_fn = nn.CrossEntropyLoss()
         try:
             for epoch in range(start_epoch, end_epoch):
-                train_batchloader = tqdm(validation_dataloader) # ! Changed for simple training
+                train_batchloader = tqdm(train_dataloader) # ! Changed for simple training
                 epoch_accuracy = 0
                 epoch_loss = 0
                 epoch_step = 0
