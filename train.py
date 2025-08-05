@@ -123,11 +123,11 @@ def train(config, device, m=None):
                         epoch_valid_accuracy = 0
                         epoch_valid_step = 0
                         for batch in valid_batch_loader:
-                            src, tgt = batch
-                            src, tgt = src.float().to(device), tgt.long().to(device)
+                            src, tgt, mel_spectrogram = batch
+                            src, tgt, mel_spectrogram = src.float().to(device), tgt.long().to(device), mel_spectrogram.float().to(device)
 
                             # Do the forward pass
-                            valid_logits = model(src)
+                            valid_logits = model(src, mel_spectrogram)
 
                             # Calculate the loss and accuracy]
                             valid_loss = loss_fn(valid_logits.permute(0, 2, 1), tgt.squeeze(1))
