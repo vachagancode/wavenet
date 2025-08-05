@@ -75,11 +75,11 @@ def train(config, device, m=None):
                 for batch in train_batchloader:
                     model.train()
 
-                    src, tgt = batch
-                    src, tgt = src.float().to(device), tgt.long().to(device)
+                    src, tgt, mel_spectrgram = batch
+                    src, tgt, mel_spectrgram = src.float().to(device), tgt.long().to(device), mel_spectrgram.float().to(device)
 
                     # Do the forward pass
-                    logits = model(src) # [batch_size]
+                    logits = model(src, mel_spectrgram) # [batch_size]
 
                     # Calculate the loss
                     # print(logits.permute(0, 2, 1).shape, tgt.shape)

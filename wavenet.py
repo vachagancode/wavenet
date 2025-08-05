@@ -42,7 +42,6 @@ class WaveNet(nn.Module):
         return condition
     
     def generate(self, mel_spectrogram, hop_length=256):
-
         self.eval()
         with torch.inference_mode():
             output = torch.zeros(1, 1, 1)
@@ -57,14 +56,15 @@ class WaveNet(nn.Module):
                 
                 # Now sampling
                 prediction = F.softmax(logits, dim=-1)
-                arg_prediction = torch.multinomial(prediction, num_samples=1)
+                arg_prediction = torch.multinomial(prediction.squeeze(0), num_samples=1).unsqueeze(0)
                 output = torch.cat([output, arg_prediction], dim=-1)
+                
             
             output = (output / (self.quantization_channels - 1)) * 2 - 1.0 
 
             output = self.mu_decoding(output)
 
-            return output.squueze(1)
+            return output.squeeze(1)
 
 
 

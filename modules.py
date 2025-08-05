@@ -90,6 +90,5 @@ class PostDilationLayer(nn.Module):
         x = self.relu(x)
         x = self.conv_1x1_2(x)
         x = x.permute(0, 2, 1)
-        # x = self.softmax(x)
 
         return x
